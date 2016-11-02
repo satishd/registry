@@ -19,6 +19,9 @@ package org.apache.registries.schemaregistry.serde;
 
 import org.apache.registries.schemaregistry.Resourceable;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Deserializer interface for deserializing InputStream into output {@code O} according to the Schema {@code S}.
  * <p>
@@ -43,7 +46,20 @@ public interface SnapshotDeserializer<I, O, WS, RS> extends Resourceable {
      * @param writerSchemaInfo
      * @param readerSchemaInfo
      * @return O output
+     * @throws SerDesException when any error occurs while deserializing the given input.
      */
     O deserialize(I input, WS writerSchemaInfo, RS readerSchemaInfo) throws SerDesException;
+
+    /**
+     * Deserializes the given {@code input} and written to given {@code output} according to the writer schema {@code WS} and
+     * it may be projected if reader schema {@code RS} is given.
+     *
+     * @param input
+     * @param output
+     * @param writerSchemaInfo
+     * @param readerSchemaInfo
+     * @throws SerDesException thrown when any error occurs while deserializing the given input.
+     */
+    void deserialize(InputStream input, OutputStream output, WS writerSchemaInfo, RS readerSchemaInfo) throws SerDesException;
 
 }

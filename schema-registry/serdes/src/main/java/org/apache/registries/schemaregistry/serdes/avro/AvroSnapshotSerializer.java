@@ -17,9 +17,6 @@
  */
 package org.apache.registries.schemaregistry.serdes.avro;
 
-import org.apache.registries.schemaregistry.SchemaIdVersion;
-import org.apache.registries.schemaregistry.serde.AbstractSnapshotSerializer;
-import org.apache.registries.schemaregistry.serde.SerDesException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericContainer;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -28,9 +25,19 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecord;
+import org.apache.registries.schemaregistry.SchemaIdVersion;
+import org.apache.registries.schemaregistry.SchemaMetadata;
+import org.apache.registries.schemaregistry.errors.IncompatibleSchemaException;
+import org.apache.registries.schemaregistry.errors.InvalidSchemaException;
+import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
+import org.apache.registries.schemaregistry.serde.AbstractSnapshotSerializer;
+import org.apache.registries.schemaregistry.serde.SerDesException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -42,24 +49,30 @@ public class AvroSnapshotSerializer extends AbstractSnapshotSerializer<Object, b
     }
 
     protected byte[] doSerialize(Object input, SchemaIdVersion schemaIdVersion) throws SerDesException {
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        doSerialize(input, byteArrayOutputStream, schemaIdVersion);
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private void doSerialize(Object input, OutputStream outputStream, SchemaIdVersion schemaIdVersion) {
+        try {
             // write schema version to the stream. Consumer would already know about the metadata for which this schema belongs to.
-            byteArrayOutputStream.write(ByteBuffer.allocate(4).putInt(schemaIdVersion.getVersion()).array());
+            outputStream.write(ByteBuffer.allocate(4).putInt(schemaIdVersion.getVersion()).array());
 
             Schema schema = computeSchema(input);
             Schema.Type schemaType = schema.getType();
             if (Schema.Type.BYTES.equals(schemaType)) {
                 // incase of byte arrays, no need to go through avro as there is not much to optimize and avro is expecting
                 // the payload to be ByteBuffer instead of a byte array
-                byteArrayOutputStream.write((byte[]) input);
+                outputStream.write((byte[]) input);
             } else if (Schema.Type.STRING.equals(schemaType)) {
-                // get UTF-8 bytes and directly send those over instead of usng avro.
-                byteArrayOutputStream.write(input.toString().getBytes(AvroUtils.UTF_8));
+                // get UTF-8 bytes and directly send those over instead of using avro.
+                outputStream.write(input.toString().getBytes(AvroUtils.UTF_8));
             } else {
-                BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(byteArrayOutputStream, null);
+                BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
                 DatumWriter<Object> writer;
                 boolean isSpecificRecord = input instanceof SpecificRecord;
-                byteArrayOutputStream.write(isSpecificRecord ? AvroUtils.SPECIFIC_RECORD : AvroUtils.GENERIC_RECORD);
+                outputStream.write(isSpecificRecord ? AvroUtils.SPECIFIC_RECORD : AvroUtils.GENERIC_RECORD);
                 if (isSpecificRecord) {
                     writer = new SpecificDatumWriter<>(schema);
                 } else {
@@ -70,8 +83,32 @@ public class AvroSnapshotSerializer extends AbstractSnapshotSerializer<Object, b
                 encoder.flush();
             }
 
-            return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
+            throw new SerDesException(e);
+        }
+    }
+
+    /**
+     * @param input
+     * @param output
+     * @param schemaMetadata
+     * @throws SerDesException
+     */
+    @Override
+    public void serialize(InputStream input, OutputStream output, SchemaMetadata schemaMetadata) throws SerDesException {
+        try {
+            ObjectInputStream objectInputStream = new ObjectInputStream(input);
+            Object readObject = objectInputStream.readObject();
+
+            // compute schema based on input object
+            String schema = getSchemaText(readObject);
+
+            // register that schema and get the version
+            SchemaIdVersion schemaIdVersion = registerSchema(schemaMetadata, schema);
+
+            // write the version and given object to the output
+            doSerialize(readObject, output, schemaIdVersion);
+        } catch (IOException | ClassNotFoundException | InvalidSchemaException | IncompatibleSchemaException | SchemaNotFoundException e) {
             throw new SerDesException(e);
         }
     }

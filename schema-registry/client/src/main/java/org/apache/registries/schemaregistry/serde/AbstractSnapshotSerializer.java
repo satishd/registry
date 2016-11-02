@@ -25,6 +25,9 @@ import org.apache.registries.schemaregistry.SchemaVersion;
 import org.apache.registries.schemaregistry.client.SchemaRegistryClient;
 import org.apache.registries.schemaregistry.errors.SchemaNotFoundException;
 
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -49,7 +52,7 @@ public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerial
 
         // register that schema and get the version
         try {
-            SchemaIdVersion schemaIdVersion = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+            SchemaIdVersion schemaIdVersion = registerSchema(schemaMetadata, schema);
             // write the version and given object to the output
             return doSerialize(input, schemaIdVersion);
         } catch (InvalidSchemaException | IncompatibleSchemaException | SchemaNotFoundException e) {
@@ -60,6 +63,12 @@ public abstract class AbstractSnapshotSerializer<I, O> implements SnapshotSerial
     protected abstract String getSchemaText(I input);
 
     protected abstract O doSerialize(I input, SchemaIdVersion schemaIdVersion) throws SerDesException;
+
+    protected SchemaIdVersion registerSchema(SchemaMetadata schemaMetadata, String schema)
+            throws InvalidSchemaException, IncompatibleSchemaException, SchemaNotFoundException {
+        return schemaRegistryClient.addSchemaVersion(schemaMetadata,
+                                                     new SchemaVersion(schema, "Schema registered by serializer:" + this.getClass()));
+    }
 
     @Override
     public void close() throws Exception {

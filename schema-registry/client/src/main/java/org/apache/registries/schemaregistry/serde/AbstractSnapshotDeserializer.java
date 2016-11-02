@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -133,6 +134,25 @@ public abstract class AbstractSnapshotDeserializer<O, S> implements SnapshotDese
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public void deserialize(InputStream input,
+                            OutputStream output,
+                            SchemaMetadata writerSchemaInfo,
+                            Integer readerSchemaInfo) throws SerDesException {
+        try {
+            int writerSchemaVersion = readVersion(input);
+            doDeserialize(input, output, writerSchemaInfo, writerSchemaVersion, readerSchemaInfo);
+        } catch (IOException e) {
+            throw new SerDesException(e);
+        }
+    }
+
+    protected abstract void doDeserialize(InputStream input,
+                                          OutputStream output,
+                                          SchemaMetadata writerSchemaInfo,
+                                          Integer writerSchemaVersion,
+                                          Integer readerSchemaInfo) throws SerDesException;
 
     @Override
     public void close() throws Exception {

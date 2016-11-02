@@ -17,6 +17,7 @@
  */
 package org.apache.registries.schemaregistry.avro;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.registries.schemaregistry.SchemaIdVersion;
 import org.apache.registries.common.test.IntegrationTest;
 import org.apache.registries.schemaregistry.SchemaMetadataInfo;
@@ -43,6 +44,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;

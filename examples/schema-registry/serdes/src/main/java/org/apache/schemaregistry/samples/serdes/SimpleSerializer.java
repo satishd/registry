@@ -25,7 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -49,6 +51,11 @@ public class SimpleSerializer implements SnapshotSerializer<Object, byte[], Sche
         }
 
         return byteArrayOutputStream.toByteArray();
+    }
+
+    @Override
+    public void serialize(InputStream input, OutputStream output, SchemaMetadata schema) throws SerDesException {
+        throw new UnsupportedOperationException("This API is not supported.");
     }
 
     @Override

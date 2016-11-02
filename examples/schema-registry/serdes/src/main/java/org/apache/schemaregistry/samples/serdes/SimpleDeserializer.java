@@ -25,7 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -54,6 +56,11 @@ public class SimpleDeserializer implements SnapshotDeserializer<byte[], Object, 
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void deserialize(InputStream input, OutputStream output, SchemaMetadata writerSchemaInfo, Integer readerSchemaInfo) throws SerDesException {
+        throw new UnsupportedOperationException("This API is not supported.");
     }
 
     @Override

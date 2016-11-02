@@ -19,6 +19,9 @@ package org.apache.registries.schemaregistry.serde;
 
 import org.apache.registries.schemaregistry.Resourceable;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Serializer interface for serializing input {@code I} into output {@code O} according to the Schema {@code S}.
  *
@@ -36,5 +39,15 @@ public interface SnapshotSerializer<I, O, S> extends Resourceable {
      * @return
      */
     O serialize(I input, S schema) throws SerDesException;
+
+    /**
+     * Serializes the given {@code input} and writes to the given {@code output} according to the given {@code schema}.
+     *
+     * @param input
+     * @param output
+     * @param schema
+     * @throws SerDesException when any error occurs while serializing the given input.
+     */
+    void serialize(InputStream input, OutputStream output, S schema) throws SerDesException;
 
 }
