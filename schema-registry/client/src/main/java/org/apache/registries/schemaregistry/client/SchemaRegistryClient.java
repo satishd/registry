@@ -17,8 +17,10 @@
  */
 package org.apache.registries.schemaregistry.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -61,6 +63,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -76,6 +80,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -88,12 +93,20 @@ import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.C
 /**
  * This is the default implementation of {@link ISchemaRegistryClient} which connects to the given {@code rootCatalogURL}.
  * <p>
- * An instance of SchemaRegistryClient can be instantiated by passing configuration properties like below.
- * <pre>
- *     SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(config);
- * </pre>
+ * An instance of SchemaRegistryClient can be instantiated
+ * <ul>
+ *     <li> By passing configuration properties map like below. <br/>
+ *         <pre>{@code Map<String, ?> config = ...
+ *SchemaRegistryClient schemaRegistryClient = new SchemaRegistryClient(config);}</pre>
+ *      <li> By giving configuration file containing properties as mentioned in {@link Configuration}
+ *         <pre>{@code File configFile = ...
+ *SchemaRegistryClient schemaRegistryClient = SchemaRegistryClient.of(configFile);}</pre>
+ *       <li> By giving inputstream with properties as mentioned in {@link Configuration}
+ *         <pre>{@code InputStream configInputStream = ...
+ *SchemaRegistryClient schemaRegistryClient = SchemaRegistryClient.of(configInputStream);}</pre>
+ * </ul>
  * <p>
- * There are different options available as mentioned in {@link Configuration} like
+ * There are different configuration properties available as mentioned in {@link Configuration} like
  * <pre>
  * - {@link Configuration#SCHEMA_REGISTRY_URL}.
  * - {@link Configuration#SCHEMA_METADATA_CACHE_SIZE}.
@@ -105,16 +118,85 @@ import static org.apache.registries.schemaregistry.client.SchemaRegistryClient.C
  *
  * and many other properties like {@link ClientProperties}
  * </pre>
+ *
+ * Below code describes how to register new schemas, add new version of a schema and fetch different versions of a schema.
  * <pre>
- * This can be used to
- *      - register schema metadata
- *      - add new versions of a schema
- *      - fetch different versions of schema
- *      - fetch latest version of a schema
- *      - check whether the given schema text is compatible with a latest version of the schema
- *      - register serializer/deserializer for a schema
- *      - fetch serializer/deserializer for a schema
- * </pre>
+ * {@code
+ * SchemaMetadata  schemaMetadata =  new SchemaMetadata.Builder(name)
+ * .type(AvroSchemaProvider.TYPE)
+ * .schemaGroup("sample-group")
+ * .description("Sample schema")
+ * .compatibility(SchemaProvider.Compatibility.BACKWARD)
+ * .build();
+ *
+ * // registering a new schema
+ * Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
+ * LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
+ *
+ * // adding a new version of the schema
+ * String schema2 = getSchema("/device-next.avsc");
+ * SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
+ * Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+ * LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
+ *
+ * //adding same schema returns the earlier registered version
+ * Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
+ * LOG.info("");
+ *
+ * // get a specific version of the schema
+ * String schemaName = schemaMetadata.getName();
+ * SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
+ *
+ * // get latest version of the schema
+ * SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
+ * LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
+ *
+ * // get all versions of the schema
+ * Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
+ * LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
+ *
+ * // finding schemas containing a specific field
+ * SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
+ * Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
+ * LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaVersionKeys);
+ *
+ * SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
+ * Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
+ * LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
+ *
+ * // Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
+ * // for avro,
+ * AvroSnapshotSerializer serializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
+ * AvroSnapshotDeserializer deserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
+ * }</pre>
+ *
+ *
+ * Below code describes how to register serializer and deserializers, map them with a schema etc.
+ * <pre> {@code
+ * // upload a jar containing serializer and deserializer classes.
+ * InputStream inputStream = new FileInputStream("/schema-custom-ser-des.jar");
+ * String fileId = schemaRegistryClient.uploadFile(inputStream);
+ *
+ * // add serializer with the respective uploaded jar file id.
+ * SerDesInfo serializerInfo = createSerDesInfo(fileId);
+ * Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
+ *
+ * // map this serializer with a registered schema
+ * schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
+ *
+ * // get registered serializers
+ * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaName);
+ * SerDesInfo registeredSerializerInfo = serializers.iterator().next();
+ *
+ * //get serializer and serialize the given payload
+ * try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
+ *   Map<String, Object> config = Collections.emptyMap();
+ *   snapshotSerializer.init(config);
+ *
+ *   byte[] serializedData = snapshotSerializer.serialize(input, schemaInfo);
+ * }
+ * }</pre>
+ *
  */
 public class SchemaRegistryClient implements ISchemaRegistryClient {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryClient.class);
@@ -552,6 +634,34 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         return readEntity(response, clazz);
     }
 
+    /**
+     * Returns {@link SchemaRegistryClient} with the given configuration file.
+     *
+     * @param configFile configuration file containing properties as mentioned in {@link Configuration}
+     * @throws IOException when any IO error(including file not found) occurs while reading from the given {@code inputStream}
+     */
+    public static SchemaRegistryClient of(File configFile) throws IOException {
+        Preconditions.checkNotNull("Given configFile must not be null");
+
+        try (FileInputStream fis = new FileInputStream(configFile)) {
+            return of(fis);
+        }
+    }
+
+    /**
+     * Returns {@link SchemaRegistryClient} with the configuration passed with {@code inputStream}.
+     *
+     * @param inputStream InputStream containing properties as mentioned in {@link Configuration}
+     * @throws IOException when any IO error occurs while reading from the given {@code inputStream}
+     */
+    public static SchemaRegistryClient of(InputStream inputStream) throws IOException {
+        Preconditions.checkNotNull("Given inputStream must not be null");
+
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+        Map<String, ?> props = objectMapper.readValue(inputStream, new TypeReference<Map<String, ?>>() {});
+        return new SchemaRegistryClient(props);
+    }
+
     public static final class Configuration {
         // we may want to remove schema.registry prefix from configuration properties as these are all properties
         // given by client.
@@ -606,7 +716,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          * Classloaders are created for serializer/deserializer jars downloaded from schema registry and they will be locally cached.
          */
         public static final ConfigEntry<Number> CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS =
-                ConfigEntry.optional("schema.registry.client.class.loader.cache.expiry.interval",
+                ConfigEntry.optional("schema.registry.client.class.loader.cache.expiry.interval.secs",
                                      Long.class,
                                      "Expiry interval(in seconds) of an entry in classloader cache",
                                      DEFAULT_CLASSLOADER_CACHE_EXPIRY_INTERVAL_SECS,
@@ -629,7 +739,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          * Expiry interval(in seconds) of an entry in schema version cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
         public static final ConfigEntry<Number> SCHEMA_VERSION_CACHE_EXPIRY_INTERVAL_SECS =
-                ConfigEntry.optional("schema.registry.client.schema.version.cache.expiry.interval",
+                ConfigEntry.optional("schema.registry.client.schema.version.cache.expiry.interval.secs",
                                      Long.class,
                                      "Expiry interval(in seconds) of an entry in schema version cache",
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
@@ -649,7 +759,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          * Expiry interval(in seconds) of an entry in schema metadata cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
         public static final ConfigEntry<Number> SCHEMA_METADATA_CACHE_EXPIRY_INTERVAL_SECS =
-                ConfigEntry.optional("schema.registry.client.schema.metadata.cache.expiry.interval",
+                ConfigEntry.optional("schema.registry.client.schema.metadata.cache.expiry.interval.secs",
                                      Long.class,
                                      "Expiry interval(in seconds) of an entry in schema metadata cache",
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
@@ -670,7 +780,7 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
          * Expiry interval(in seconds) of an entry in schema text cache. Default value is {@link #DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS}
          */
         public static final ConfigEntry<Number> SCHEMA_TEXT_CACHE_EXPIRY_INTERVAL_SECS =
-                ConfigEntry.optional("schema.registry.client.schema.text.cache.expiry.interval",
+                ConfigEntry.optional("schema.registry.client.schema.text.cache.expiry.interval.secs",
                                      Long.class,
                                      "Expiry interval(in seconds) of an entry in schema text cache.",
                                      DEFAULT_SCHEMA_CACHE_EXPIRY_INTERVAL_SECS,
@@ -688,11 +798,11 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
         public static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
 
         private final Map<String, ?> config;
-        private final Map<String, ConfigEntry<?>> options;
+
+        private static final Map<String, ConfigEntry<?>> options =
+                Collections.unmodifiableMap(buildOptions(Configuration.class.getDeclaredFields()));
 
         public Configuration(Map<String, ?> config) {
-            Field[] fields = this.getClass().getDeclaredFields();
-            this.options = Collections.unmodifiableMap(buildOptions(fields));
             this.config = buildConfig(config);
         }
 
@@ -716,15 +826,16 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return result;
         }
 
-        private Map<String, ConfigEntry<?>> buildOptions(Field[] fields) {
+        private static Map<String, ConfigEntry<?>> buildOptions(Field[] fields) {
             Map<String, ConfigEntry<?>> options = new HashMap<>();
+            Configuration configInstance = new Configuration(Collections.emptyMap());
             for (Field field : fields) {
                 Class<?> type = field.getType();
 
                 if (type.isAssignableFrom(ConfigEntry.class)) {
                     field.setAccessible(true);
                     try {
-                        ConfigEntry configEntry = (ConfigEntry) field.get(this);
+                        ConfigEntry configEntry = (ConfigEntry) field.get(configInstance);
                         options.put(configEntry.name(), configEntry);
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
@@ -738,7 +849,18 @@ public class SchemaRegistryClient implements ISchemaRegistryClient {
             return (T) (config.containsKey(propertyKey) ? config.get(propertyKey) : options.get(propertyKey).defaultValue());
         }
 
-        public Collection<ConfigEntry<?>> getAvailableConfigEntries() {
+        /**
+         * @return an unmodifiable {@link Map} of effective properties for this instance.
+         */
+        public Map<String, ?> getProperties() {
+            return Collections.unmodifiableMap(config);
+        }
+
+        /**
+         * @return Collection of {@link ConfigEntry} which are defined by schema registry client. This does not include
+         * properties like jersey client configuration.
+         */
+        public static Collection<ConfigEntry<?>> getAvailableConfigEntries() {
             return options.values();
         }
 

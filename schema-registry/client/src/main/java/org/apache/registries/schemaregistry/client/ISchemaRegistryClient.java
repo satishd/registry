@@ -38,82 +38,15 @@ import java.util.Collection;
 
 /**
  * This interface defines different methods to interact with remote schema registry.
- * <p>
- * Below code describes how to register new schemas, add new version of a schema and fetch different versions of a schema.
  * <pre>
- *
- * SchemaMetadata  schemaMetadata =  new SchemaMetadata.Builder(name)
- * .type(AvroSchemaProvider.TYPE)
- * .schemaGroup("sample-group")
- * .description("Sample schema")
- * .compatibility(SchemaProvider.Compatibility.BACKWARD)
- * .build();
- *
- * // registering a new schema
- * Integer v1 = schemaRegistryClient.addSchemaVersion(schemaMetadata, new SchemaVersion(schema1, "Initial version of the schema"));
- * LOG.info("Registered schema [{}] and returned version [{}]", schema1, v1);
- *
- * // adding a new version of the schema
- * String schema2 = getSchema("/device-next.avsc");
- * SchemaVersion schemaInfo2 = new SchemaVersion(schema2, "second version");
- * Integer v2 = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
- * LOG.info("Registered schema [{}] and returned version [{}]", schema2, v2);
- *
- * //adding same schema returns the earlier registered version
- * Integer version = schemaRegistryClient.addSchemaVersion(schemaMetadata, schemaInfo2);
- * LOG.info("");
- *
- * // get a specific version of the schema
- * String schemaName = schemaMetadata.getName();
- * SchemaVersionInfo schemaVersionInfo = schemaRegistryClient.getSchemaVersionInfo(new SchemaVersionKey(schemaName, v2));
- *
- * // get latest version of the schema
- * SchemaVersionInfo latest = schemaRegistryClient.getLatestSchemaVersionInfo(schemaName);
- * LOG.info("Latest schema with schema key [{}] is : [{}]", schemaMetadata, latest);
- *
- * // get all versions of the schema
- * Collection<SchemaVersionInfo> allVersions = schemaRegistryClient.getAllVersions(schemaName);
- * LOG.info("All versions of schema key [{}] is : [{}]", schemaMetadata, allVersions);
- *
- * // finding schemas containing a specific field
- * SchemaFieldQuery md5FieldQuery = new SchemaFieldQuery.Builder().name("md5").build();
- * Collection<SchemaVersionKey> md5SchemaVersionKeys = schemaRegistryClient.findSchemasByFields(md5FieldQuery);
- * LOG.info("Schemas containing field query [{}] : [{}]", md5FieldQuery, md5SchemaVersionKeys);
- *
- * SchemaFieldQuery txidFieldQuery = new SchemaFieldQuery.Builder().name("txid").build();
- * Collection<SchemaVersionKey> txidSchemaVersionKeys = schemaRegistryClient.findSchemasByFields(txidFieldQuery);
- * LOG.info("Schemas containing field query [{}] : [{}]", txidFieldQuery, txidSchemaVersionKeys);
- *
- * // Default serializer and deserializer for a given schema provider can be retrieved with the below APIs.
- * // for avro,
- * AvroSnapshotSerializer serializer = schemaRegistryClient.getDefaultSerializer(AvroSchemaProvider.TYPE);
- * AvroSnapshotDeserializer deserializer = schemaRegistryClient.getDefaultDeserializer(AvroSchemaProvider.TYPE);
- * </pre>
- * <p>
- * Below code describes how to register serializer and deserializers, map them with a schema etc.
- * <pre>
- * // upload a jar containing serializer and deserializer classes.
- * InputStream inputStream = new FileInputStream("/schema-custom-ser-des.jar");
- * String fileId = schemaRegistryClient.uploadFile(inputStream);
- *
- * // add serializer with the respective uploaded jar file id.
- * SerDesInfo serializerInfo = createSerDesInfo(fileId);
- * Long serializerId = schemaRegistryClient.addSerializer(serializerInfo);
- *
- * // map this serializer with a registered schema
- * schemaRegistryClient.mapSchemaWithSerDes(schemaName, serializerId);
- *
- * // get registered serializers
- * Collection<SerDesInfo> serializers = schemaRegistryClient.getSerializers(schemaName);
- * SerDesInfo registeredSerializerInfo = serializers.iterator().next();
- *
- * //get serializer and serialize the given payload
- * try(AvroSnapshotSerializer snapshotSerializer = schemaRegistryClient.createInstance(registeredSerializerInfo);) {
- * Map<String, Object> config = Collections.emptyMap();
- * snapshotSerializer.init(config);
- *
- * byte[] serializedData = snapshotSerializer.serialize(input, schemaInfo);
- *
+ * This can be used to
+ *      - register schema metadata
+ *      - add new versions of a schema
+ *      - fetch different versions of schema
+ *      - fetch latest version of a schema
+ *      - check whether the given schema text is compatible with a latest version of the schema
+ *      - register serializer/deserializer for a schema
+ *      - fetch serializer/deserializer for a schema
  * </pre>
  */
 public interface ISchemaRegistryClient extends AutoCloseable {

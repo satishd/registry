@@ -1,0 +1,7 @@
+schema.registry.url: "http://localhost:9090/api/v1"
+schema.registry.client.class.loader.cache.size: 1000
+schema.registry.client.class.loader.cache.expiry.interval.secs: 300
+schema.registry.client.schema.metadata.cache.size: 500
+schema.registry.client.schema.metadata.cache.expiry.interval.secs: 600
+schema.registry.client.schema.text.cache.size: 10000
+schema.registry.client.schema.text.cache.expiry.interval.secs: 600

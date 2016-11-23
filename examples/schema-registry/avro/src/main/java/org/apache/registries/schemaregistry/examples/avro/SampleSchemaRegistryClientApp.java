@@ -54,7 +54,7 @@ import java.util.Random;
 public class SampleSchemaRegistryClientApp {
     private static final Logger LOG = LoggerFactory.getLogger(SampleSchemaRegistryClientApp.class);
     public static final String DEFAULT_SCHEMA_REG_URL = "http://localhost:9090/api/v1";
-    private final Map<String, Object> config;
+    private final Map<String, ?> config;
     private final SchemaRegistryClient schemaRegistryClient;
 
     public SampleSchemaRegistryClientApp() {
@@ -62,8 +62,13 @@ public class SampleSchemaRegistryClientApp {
     }
 
     public SampleSchemaRegistryClientApp(Map<String, Object> config) {
-        this.config = config;
         schemaRegistryClient = new SchemaRegistryClient(config);
+        this.config = schemaRegistryClient.getConfiguration().getProperties();
+    }
+
+    public SampleSchemaRegistryClientApp(InputStream configInputStream) throws IOException {
+        this.schemaRegistryClient = SchemaRegistryClient.of(configInputStream);
+        config = schemaRegistryClient.getConfiguration().getProperties();
     }
 
     public void runSchemaApis() throws Exception {
@@ -252,15 +257,16 @@ public class SampleSchemaRegistryClientApp {
     }
 
     public static void main(String[] args) throws Exception {
-        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), DEFAULT_SCHEMA_REG_URL);
-        Map<String, Object> config = createConfig(schemaRegistryUrl);
-        SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(config);
+//        String schemaRegistryUrl = System.getProperty(SchemaRegistryClient.Configuration.SCHEMA_REGISTRY_URL.name(), DEFAULT_SCHEMA_REG_URL);
+//        Map<String, Object> config = createConfig(schemaRegistryUrl);
 
-        sampleSchemaRegistryClientApp.runSchemaApis();
+        try (InputStream inputStream = SampleSchemaRegistryClientApp.class.getResourceAsStream("/schema-registry-client.yaml")) {
+            SampleSchemaRegistryClientApp sampleSchemaRegistryClientApp = new SampleSchemaRegistryClientApp(inputStream);
 
-        sampleSchemaRegistryClientApp.runCustomSerDesApi();
-
-        sampleSchemaRegistryClientApp.runAvroSerDesApis();
+            sampleSchemaRegistryClientApp.runSchemaApis();
+            sampleSchemaRegistryClientApp.runCustomSerDesApi();
+            sampleSchemaRegistryClientApp.runAvroSerDesApis();
+        }
     }
 
     public static Map<String, Object> createConfig(String schemaRegistryUrl) {
