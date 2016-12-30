@@ -15,6 +15,9 @@
  **/
 package com.hortonworks.registries.webservice;
 
+import com.hortonworks.registries.common.ha.LeadershipAware;
+import com.hortonworks.registries.common.ha.LeadershipClient;
+import com.hortonworks.registries.zk.ZKLeadershipClient;
 import io.dropwizard.assets.AssetsBundle;
 import com.hortonworks.registries.common.FileStorageConfiguration;
 import com.hortonworks.registries.common.ModuleConfiguration;
@@ -35,19 +38,25 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
  */
 public class RegistryApplication extends Application<RegistryConfiguration> {
     private static final Logger LOG = LoggerFactory.getLogger(RegistryApplication.class);
+    private LeadershipClient leadershipClient;
 
     @Override
     public void run(RegistryConfiguration registryConfiguration, Environment environment) throws Exception {
+
+        // handle HA if it is configured
+        registerHA(registryConfiguration.getZookeeperConfig(), environment);
 
         registerResources(environment, registryConfiguration);
 
@@ -56,11 +65,25 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
         }
     }
 
+    private void registerHA(Map<String, Object> zkConfig, Environment environment) throws Exception {
+        if(zkConfig != null) {
+            String serverUrl = environment.getAdminContext().getServer().getURI().toString();
+            LOG.info("Server URL [{}]", serverUrl);
+            LOG.info("Zookeeper configuration: [{}]", zkConfig);
+            leadershipClient = new ZKLeadershipClient(zkConfig, serverUrl);
+            LOG.info("Registering for leadership");
+            leadershipClient.participateForLeadership();
+            LOG.info("Registered for leadership");
+        } else {
+            leadershipClient = LeadershipClient.LOCAL_LEADER;
+            LOG.info("No Zookeeper configuration exists, not registering for HA.");
+        }
+    }
+
     @Override
     public String getName() {
         return "Schema Registry";
     }
-
 
     @Override
     public void initialize(Bootstrap<RegistryConfiguration> bootstrap) {
@@ -96,6 +119,13 @@ public class RegistryApplication extends Application<RegistryConfiguration> {
                 StorageManagerAware storageManagerAware = (StorageManagerAware) moduleRegistration;
                 storageManagerAware.setStorageManager(storageManager);
             }
+
+            if(moduleRegistration instanceof LeadershipAware) {
+                LOG.info("Module [{}] is registered for LeadershipClient registration.");
+                LeadershipAware leadershipAware = (LeadershipAware) moduleRegistration;
+                leadershipAware.setLeadershipClient(leadershipClient);
+            }
+
             resourcesToRegister.addAll(moduleRegistration.getResources());
         }
 

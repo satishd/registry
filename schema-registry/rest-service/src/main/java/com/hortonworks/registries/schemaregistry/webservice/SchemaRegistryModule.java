@@ -16,8 +16,11 @@
 package com.hortonworks.registries.schemaregistry.webservice;
 
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Collections2;
 import com.hortonworks.registries.common.ModuleRegistration;
+import com.hortonworks.registries.common.ha.LeadershipAware;
+import com.hortonworks.registries.common.ha.LeadershipClient;
 import com.hortonworks.registries.common.util.FileStorage;
 import com.hortonworks.registries.schemaregistry.DefaultSchemaRegistry;
 import com.hortonworks.registries.schemaregistry.SchemaProvider;
@@ -35,13 +38,14 @@ import java.util.Map;
 /**
  *
  */
-public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware {
+public class SchemaRegistryModule implements ModuleRegistration, StorageManagerAware, LeadershipAware {
     private static final Logger LOG = LoggerFactory.getLogger(SchemaRegistryModule.class);
     public static final String SCHEMA_PROVIDERS = "schemaProviders";
 
     private Map<String, Object> config;
     private FileStorage fileStorage;
     private StorageManager storageManager;
+    private LeadershipClient leadershipClient;
 
     @Override
     public void setStorageManager(StorageManager storageManager) {
@@ -59,7 +63,7 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         Collection<? extends SchemaProvider> schemaProviders = getSchemaProviders();
         DefaultSchemaRegistry schemaRegistry = new DefaultSchemaRegistry(storageManager, fileStorage, schemaProviders);
         schemaRegistry.init(config);
-        SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry);
+        SchemaRegistryResource schemaRegistryResource = new SchemaRegistryResource(schemaRegistry, leadershipClient);
         return Collections.<Object>singletonList(schemaRegistryResource);
     }
 
@@ -89,4 +93,9 @@ public class SchemaRegistryModule implements ModuleRegistration, StorageManagerA
         });
     }
 
+    @Override
+    public void setLeadershipClient(LeadershipClient leadershipClient) {
+        Preconditions.checkState(this.leadershipClient == null, "leadershipClient " + leadershipClient + " is already set!!");
+        this.leadershipClient = leadershipClient;
+    }
 }

@@ -14,6 +14,18 @@ modules:
       # inmemory schema version cache entry expiry interval after access
       schemaCacheExpiryInterval: 3600
 
+# ZK configuration
+zookeeperConfig:
+  # This url is a list of ZK servers separated by ,
+  conn.url: "localhost:2181"
+  # root node in ZK for this instance
+  root: "/registry"
+  session.timeout.ms: 30000
+  connection.timeout.ms: 20000
+  retry.limit: 5
+  retry.base.sleep.time.ms: 1000
+  retry.max.sleep.time.ms: 5000
+
 # Filesystem based jar storage
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"

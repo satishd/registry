@@ -25,6 +25,7 @@ import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -40,6 +41,9 @@ public class RegistryConfiguration extends Configuration {
     @NotNull
     @JsonProperty
     private List<ModuleConfiguration> modules;
+
+    @JsonProperty
+    private Map<String, Object> zookeeperConfig;
 
     @JsonProperty
     private boolean enableCors;
@@ -81,5 +85,13 @@ public class RegistryConfiguration extends Configuration {
 
     public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
         return swaggerBundleConfiguration;
+    }
+
+    public Map<String, Object> getZookeeperConfig() {
+        return zookeeperConfig;
+    }
+
+    public void setZookeeperConfig(Map<String, Object> zookeeperConfig) {
+        this.zookeeperConfig = zookeeperConfig;
     }
 }
