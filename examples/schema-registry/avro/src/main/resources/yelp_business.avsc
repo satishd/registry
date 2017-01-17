@@ -14,13 +14,13 @@
     {
       "name": "hours",
       "type": {
-        "name": "hours entry",
+        "name": "hours_entry",
         "type": "record",
         "fields": [
           {
             "name": "Friday",
             "type": {
-              "name": "Friday entry",
+              "name": "Friday_entry",
               "type": "record",
               "fields": [
                 {
@@ -37,7 +37,7 @@
           {
             "name": "Tuesday",
             "type": {
-              "name": "Tuesday entry",
+              "name": "Tuesday_entry",
               "type": "record",
               "fields": [
                 {
@@ -54,7 +54,7 @@
           {
             "name": "Thursday",
             "type": {
-              "name": "Thursday entry",
+              "name": "Thursday_entry",
               "type": "record",
               "fields": [
                 {
@@ -71,7 +71,7 @@
           {
             "name": "Wednesday",
             "type": {
-              "name": "Wednesday entry",
+              "name": "Wednesday_entry",
               "type": "record",
               "fields": [
                 {
@@ -88,7 +88,7 @@
           {
             "name": "Monday",
             "type": {
-              "name": "Monday entry",
+              "name": "Monday_entry",
               "type": "record",
               "fields": [
                 {
@@ -111,8 +111,11 @@
     },
     {
       "name": "categories",
-      "type": "array",
-      "items": "string"
+      "type": {
+        "name": "categories_array",
+        "type": "array",
+        "items": "string"
+      }
     },
     {
       "name": "city",
@@ -128,8 +131,11 @@
     },
     {
       "name": "neighborhoods",
-      "type": "array",
-      "items": "string"
+      "type": {
+        "name": "categories_array",
+        "type": "array",
+        "items": "string"
+      }
     },
     {
       "name": "longitude",
@@ -150,60 +156,63 @@
     {
       "name": "attributes",
       "type": {
-        "name": "attribute entries",
+        "name": "attribute_entries",
         "type": "record",
         "fields": [
           {
-            "name": "Take-out",
+            "name": "TakeOut",
             "type": "boolean"
           },
           {
-            "name": "Drive-thru",
+            "name": "DriveThru",
             "type": "boolean"
           },
           {
-            "name": "Good For",
-            "type": {
-              "name": "Good For entry",
-              "type": "record",
-              "fields": [
-                {
-                  "name": "dessert",
-                  "type": "boolean"
-                },
-                {
-                  "name": "latenight",
-                  "type": "boolean"
-                },
-                {
-                  "name": "lunch",
-                  "type": "boolean"
-                },
-                {
-                  "name": "dinner",
-                  "type": "boolean"
-                },
-                {
-                  "name": "brunch",
-                  "type": "boolean"
-                },
-                {
-                  "name": "breakfast",
-                  "type": "boolean"
-                }
-              ]
-            }
+            "name": "GoodFor",
+            "type": [
+              "null",
+              {
+                "name": "Good_For_entry",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "dessert",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "latenight",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "lunch",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "dinner",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "brunch",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "breakfast",
+                    "type": "boolean"
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "Caters",
             "type": "boolean"
           },
           {
-            "name": "Noise Level",
+            "name": "NoiseLevel",
             "type": "string"
           },
           {
-            "name": "Takes Reservations",
+            "name": "TakesReservations",
             "type": "boolean"
           },
           {
@@ -212,84 +221,90 @@
           },
           {
             "name": "Ambience",
-            "type": {
-              "name": "Ambience entry",
-              "type": "record",
-              "fields": [
-                {
-                  "name": "romantic",
-                  "type": "boolean"
-                },
-                {
-                  "name": "intimate",
-                  "type": "boolean"
-                },
-                {
-                  "name": "classy",
-                  "type": "boolean"
-                },
-                {
-                  "name": "hipster",
-                  "type": "boolean"
-                },
-                {
-                  "name": "divey",
-                  "type": "boolean"
-                },
-                {
-                  "name": "touristy",
-                  "type": "boolean"
-                },
-                {
-                  "name": "trendy",
-                  "type": "boolean"
-                },
-                {
-                  "name": "upscale",
-                  "type": "boolean"
-                },
-                {
-                  "name": "casual",
-                  "type": "boolean"
-                }
-              ]
-            }
+            "type": [
+              "null",
+              {
+                "name": "Ambience_entry",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "romantic",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "intimate",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "classy",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "hipster",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "divey",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "touristy",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "trendy",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "upscale",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "casual",
+                    "type": "boolean"
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "Parking",
-            "type": {
-              "name": "Parking entry",
-              "type": "record",
-              "fields": [
-                {
-                  "name": "garage",
-                  "type": "boolean"
-                },
-                {
-                  "name": "street",
-                  "type": "boolean"
-                },
-                {
-                  "name": "validated",
-                  "type": "boolean"
-                },
-                {
-                  "name": "lot",
-                  "type": "boolean"
-                },
-                {
-                  "name": "valet",
-                  "type": "boolean"
-                }
-              ]
-            }
+            "type": [
+              "null",
+              {
+                "name": "Parking_entry",
+                "type": "record",
+                "fields": [
+                  {
+                    "name": "garage",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "street",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "validated",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "lot",
+                    "type": "boolean"
+                  },
+                  {
+                    "name": "valet",
+                    "type": "boolean"
+                  }
+                ]
+              }
+            ]
           },
           {
-            "name": "Has TV",
+            "name": "HasTV",
             "type": "boolean"
           },
           {
-            "name": "Outdoor Seating",
+            "name": "OutdoorSeating",
             "type": "boolean"
           },
           {
@@ -301,23 +316,23 @@
             "type": "string"
           },
           {
-            "name": "Waiter Service",
+            "name": "WaiterService",
             "type": "boolean"
           },
           {
-            "name": "Accepts Credit Cards",
+            "name": "AcceptsCreditCards",
             "type": "boolean"
           },
           {
-            "name": "Good for Kids",
+            "name": "GoodForKids",
             "type": "boolean"
           },
           {
-            "name": "Good For Groups",
+            "name": "GoodForGroups",
             "type": "boolean"
           },
           {
-            "name": "Price Range",
+            "name": "PriceRange",
             "type": "int"
           }
         ]

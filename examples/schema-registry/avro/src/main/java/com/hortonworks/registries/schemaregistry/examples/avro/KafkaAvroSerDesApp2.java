@@ -98,7 +98,7 @@ public class KafkaAvroSerDesApp2 {
 
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(payloadJsonFile))) {
             String line;
-            while (current++ > limit && (line = bufferedReader.readLine()) != null) {
+            while (current++ < limit && (line = bufferedReader.readLine()) != null) {
                 // convert json to avro records
                 Object avroMsg = jsonToAvro(line, schema);
 

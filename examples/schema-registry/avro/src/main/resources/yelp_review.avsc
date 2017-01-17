@@ -20,15 +20,11 @@
       "type": "string"
     },
     {
-      "name": "type",
-      "type": "review"
-    },
-    {
       "name": "business_id",
       "type": "string"
     },
     {
-      "name": "text",
+      "name": "type",
       "type": "string"
     },
     {
