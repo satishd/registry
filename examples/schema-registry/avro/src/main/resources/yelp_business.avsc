@@ -1,0 +1,331 @@
+{
+  "type": "record",
+  "namespace": "com.hortonworks.registries",
+  "name": "yelp_business",
+  "fields": [
+    {
+      "name": "business_id",
+      "type": "string"
+    },
+    {
+      "name": "full_address",
+      "type": "string"
+    },
+    {
+      "name": "hours",
+      "type": {
+        "name": "hours entry",
+        "type": "record",
+        "fields": [
+          {
+            "name": "Friday",
+            "type": {
+              "name": "Friday entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "close",
+                  "type": "string"
+                },
+                {
+                  "name": "open",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Tuesday",
+            "type": {
+              "name": "Tuesday entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "close",
+                  "type": "string"
+                },
+                {
+                  "name": "open",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Thursday",
+            "type": {
+              "name": "Thursday entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "close",
+                  "type": "string"
+                },
+                {
+                  "name": "open",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Wednesday",
+            "type": {
+              "name": "Wednesday entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "close",
+                  "type": "string"
+                },
+                {
+                  "name": "open",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Monday",
+            "type": {
+              "name": "Monday entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "close",
+                  "type": "string"
+                },
+                {
+                  "name": "open",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "open",
+      "type": "boolean"
+    },
+    {
+      "name": "categories",
+      "type": "array",
+      "items": "string"
+    },
+    {
+      "name": "city",
+      "type": "string"
+    },
+    {
+      "name": "review_count",
+      "type": "int"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "neighborhoods",
+      "type": "array",
+      "items": "string"
+    },
+    {
+      "name": "longitude",
+      "type": "double"
+    },
+    {
+      "name": "latitude",
+      "type": "double"
+    },
+    {
+      "name": "state",
+      "type": "string"
+    },
+    {
+      "name": "stars",
+      "type": "double"
+    },
+    {
+      "name": "attributes",
+      "type": {
+        "name": "attribute entries",
+        "type": "record",
+        "fields": [
+          {
+            "name": "Take-out",
+            "type": "boolean"
+          },
+          {
+            "name": "Drive-thru",
+            "type": "boolean"
+          },
+          {
+            "name": "Good For",
+            "type": {
+              "name": "Good For entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "dessert",
+                  "type": "boolean"
+                },
+                {
+                  "name": "latenight",
+                  "type": "boolean"
+                },
+                {
+                  "name": "lunch",
+                  "type": "boolean"
+                },
+                {
+                  "name": "dinner",
+                  "type": "boolean"
+                },
+                {
+                  "name": "brunch",
+                  "type": "boolean"
+                },
+                {
+                  "name": "breakfast",
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Caters",
+            "type": "boolean"
+          },
+          {
+            "name": "Noise Level",
+            "type": "string"
+          },
+          {
+            "name": "Takes Reservations",
+            "type": "boolean"
+          },
+          {
+            "name": "Delivery",
+            "type": "boolean"
+          },
+          {
+            "name": "Ambience",
+            "type": {
+              "name": "Ambience entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "romantic",
+                  "type": "boolean"
+                },
+                {
+                  "name": "intimate",
+                  "type": "boolean"
+                },
+                {
+                  "name": "classy",
+                  "type": "boolean"
+                },
+                {
+                  "name": "hipster",
+                  "type": "boolean"
+                },
+                {
+                  "name": "divey",
+                  "type": "boolean"
+                },
+                {
+                  "name": "touristy",
+                  "type": "boolean"
+                },
+                {
+                  "name": "trendy",
+                  "type": "boolean"
+                },
+                {
+                  "name": "upscale",
+                  "type": "boolean"
+                },
+                {
+                  "name": "casual",
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Parking",
+            "type": {
+              "name": "Parking entry",
+              "type": "record",
+              "fields": [
+                {
+                  "name": "garage",
+                  "type": "boolean"
+                },
+                {
+                  "name": "street",
+                  "type": "boolean"
+                },
+                {
+                  "name": "validated",
+                  "type": "boolean"
+                },
+                {
+                  "name": "lot",
+                  "type": "boolean"
+                },
+                {
+                  "name": "valet",
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Has TV",
+            "type": "boolean"
+          },
+          {
+            "name": "Outdoor Seating",
+            "type": "boolean"
+          },
+          {
+            "name": "Attire",
+            "type": "string"
+          },
+          {
+            "name": "Alcohol",
+            "type": "string"
+          },
+          {
+            "name": "Waiter Service",
+            "type": "boolean"
+          },
+          {
+            "name": "Accepts Credit Cards",
+            "type": "boolean"
+          },
+          {
+            "name": "Good for Kids",
+            "type": "boolean"
+          },
+          {
+            "name": "Good For Groups",
+            "type": "boolean"
+          },
+          {
+            "name": "Price Range",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "name": "type",
+      "type": "string"
+    }
+  ]
+}
